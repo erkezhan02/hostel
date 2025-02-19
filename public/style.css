@@ -1,0 +1,106 @@
+/* 🌟 Общий стиль */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    color: white;
+}
+
+/* 🌟 Заголовки */
+h2 {
+    margin-bottom: 10px;
+    font-size: 26px;
+    text-transform: uppercase;
+}
+
+/* 🌟 Форма */
+input, button {
+    margin: 8px;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input {
+    width: 250px;
+    background: white;
+    color: #333;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+input:focus {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 🌟 Кнопки */
+button {
+    background: #ff7eb3;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    background: #ff4f7b;
+}
+
+/* 🌟 Карточки отелей */
+#hotels {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hotel-card {
+    background: white;
+    color: #333;
+    padding: 20px;
+    margin: 15px;
+    width: 350px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hotel-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* 🌟 Кнопки внутри карточек */
+button.delete-btn {
+    background: #ff4d4d;
+}
+
+button.delete-btn:hover {
+    background: #cc0000;
+}
+
+button.edit-btn {
+    background: #ffc107;
+    color: black;
+}
+
+button.edit-btn:hover {
+    background: #e0a800;
+}
+
+/* 🌟 Адаптивность */
+@media (max-width: 768px) {
+    input {
+        width: 100%;
+    }
+
+    .hotel-card {
+        width: 90%;
+    }
+}
