@@ -12,6 +12,54 @@ router.get("/", async (req, res) => {
     }
 });
 
+// search (2 task)
+router.get("/search", async (req, res) => {
+    const minRating = req.query.minRating ? parseFloat(req.query.minRating) : 1;
+    const maxRating = req.query.maxRating ? parseFloat(req.query.maxRating) : 5;
+
+    try {
+        const pipeline = [
+            // 1. Match hotels within the rating range
+            {
+                $match: {
+                    rating: { $gte: minRating, $lte: maxRating }
+                }
+            },
+
+            // 2. Grouping by rating range using updated boundaries
+            {
+                $bucket: {
+                    groupBy: "$rating",
+                    boundaries: [0, 1, 2, 3, 4, 5, 6],  // Corrected boundaries
+                    default: "5+",
+                    output: {
+                        count: { $sum: 1 },
+                        hotels: { $push: { name: "$name", location: "$location", rating: "$rating" } }
+                    }
+                }
+            },
+
+            // 3. Projecting the final output
+            {
+                $project: {
+                    _id: 0,
+                    ratingRange: "$_id",
+                    count: 1,
+                    hotels: 1
+                }
+            }
+        ];
+
+        const result = await Hotel.aggregate(pipeline);
+        res.json(result);
+    } catch (err) {
+        console.error("Ошибка при поиске отелей:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+
 // ✅ Создать отель
 router.post("/", async (req, res) => {
     try {

@@ -8,88 +8,140 @@
 </head>
 <body>
 
-    <h2>Добавить отель</h2>
-    <input type="text" id="name" placeholder="Название отеля">
-    <input type="text" id="location" placeholder="Город">
-    <input type="number" id="rating" placeholder="Рейтинг (1-5)">
-    <input type="text" id="amenities" placeholder="Удобства (Wi-Fi, Бассейн)">
-    <button onclick="addHotel()">Добавить</button>
+<h2>Добавить отель</h2>
+<input type="text" id="name" placeholder="Название отеля">
+<input type="text" id="location" placeholder="Город">
+<input type="number" id="rating" placeholder="Рейтинг (1-5)">
+<input type="text" id="amenities" placeholder="Удобства (Wi-Fi, Бассейн)">
+<button onclick="addHotel()">Добавить</button>
 
-    <h2>Обновить отель</h2>
-    <input type="text" id="update-id" placeholder="ID отеля" readonly>
-    <input type="text" id="update-name" placeholder="Новое название">
-    <input type="text" id="update-location" placeholder="Новый город">
-    <input type="number" id="update-rating" placeholder="Новый рейтинг (1-5)">
-    <input type="text" id="update-amenities" placeholder="Новые удобства">
-    <button onclick="updateHotel()">Обновить</button>
+<h2>Обновить отель</h2>
+<input type="text" id="update-id" placeholder="ID отеля" readonly>
+<input type="text" id="update-name" placeholder="Новое название">
+<input type="text" id="update-location" placeholder="Новый город">
+<input type="number" id="update-rating" placeholder="Новый рейтинг (1-5)">
+<input type="text" id="update-amenities" placeholder="Новые удобства">
+<button onclick="updateHotel()">Обновить</button>
 
-    <h2>Список отелей</h2>
-    <button onclick="getHotels()">Загрузить отели</button>
-    <div id="hotels"></div>
+<h2>Список отелей</h2>
+<button onclick="getHotels()">Загрузить отели</button>
+<div class="hotels"></div>
 
-    <script>
-        const API_URL = "http://localhost:3000/hotels";
+<h2>Поиск отелей по рейтингу</h2>
+<div>
+    <input type="number" id="min-rating" placeholder="Мин. рейтинг (1-5)" min="1" max="5">
+    <input type="number" id="max-rating" placeholder="Макс. рейтинг (1-5)" min="1" max="5">
+    <button onclick="searchHotelsByRating()">Найти по рейтингу</button>
+</div>
+<div id="rating-results" class="hotels"></div>
 
-        function getHotels() {
-            fetch(API_URL)
-                .then(res => res.json())
-                .then(data => {
-                    let html = "";
-                    data.forEach(hotel => {
-                        html += `
+
+
+<script>
+    const API_URL = "http://localhost:5000/hotels";
+    const SEARCH_URL = "http://localhost:5000/hotels/search";
+
+
+    function getHotels() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => {
+                const hotelsContainer = document.querySelector(".hotels");
+                let html = "";
+                data.forEach(hotel => {
+                    html += `
+                    <div class="hotel-card">
+                        <h3>${hotel.name}</h3>
+                        <p><b>Город:</b> ${hotel.location}</p>
+                        <p><b>Рейтинг:</b> ${hotel.rating}★</p>
+                        <p><b>Удобства:</b> ${hotel.amenities.join(", ")}</p>
+                        <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities.join(", ")}')">Редактировать</button>
+                        <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
+                    </div>`;
+                });
+                hotelsContainer.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Ошибка при загрузке отелей:", err);
+            });
+    }
+
+    function addHotel() {
+        const name = document.getElementById("name").value;
+        const location = document.getElementById("location").value;
+        const rating = document.getElementById("rating").value;
+        const amenities = document.getElementById("amenities").value.split(",");
+
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, location, rating, amenities })
+        }).then(() => getHotels());
+    }
+
+    function updateHotel() {
+        const id = document.getElementById("update-id").value;
+        const name = document.getElementById("update-name").value;
+        const location = document.getElementById("update-location").value;
+        const rating = document.getElementById("update-rating").value;
+        const amenities = document.getElementById("update-amenities").value.split(",");
+
+        fetch(`${API_URL}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, location, rating, amenities })
+        }).then(() => getHotels());
+    }
+
+    function fillUpdateForm(id, name, location, rating, amenities) {
+        document.getElementById("update-id").value = id;
+        document.getElementById("update-name").value = name;
+        document.getElementById("update-location").value = location;
+        document.getElementById("update-rating").value = rating;
+        document.getElementById("update-amenities").value = amenities;
+    }
+
+    function deleteHotel(id) {
+        fetch(`${API_URL}/${id}`, { method: "DELETE" })
+            .then(() => getHotels());
+    }
+
+    function searchHotelsByRating() {
+        const minRating = parseFloat(document.getElementById("min-rating").value) || 1;
+        const maxRating = parseFloat(document.getElementById("max-rating").value) || 5;
+        const resultsContainer = document.getElementById("rating-results");
+
+        fetch(`${SEARCH_URL}?minRating=${minRating}&maxRating=${maxRating}`)
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                if (data.length > 0) {
+                    data.forEach(group => {
+                        group.hotels.forEach(hotel => {
+                            html += `
                             <div class="hotel-card">
                                 <h3>${hotel.name}</h3>
                                 <p><b>Город:</b> ${hotel.location}</p>
                                 <p><b>Рейтинг:</b> ${hotel.rating}★</p>
-                                <p><b>Удобства:</b> ${hotel.amenities.join(", ")}</p>
-                                <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities.join(", ")}')">Редактировать</button>
+                                <p><b>Удобства:</b> ${hotel.amenities ? hotel.amenities.join(", ") : ''}</p>
+                                <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities ? hotel.amenities.join(", ") : ''}')">Редактировать</button>
                                 <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
                             </div>`;
+                        });
                     });
-                    document.getElementById("hotels").innerHTML = html;
-                });
-        }
+                } else {
+                    html = `<p>😔 Отелей с таким рейтингом не найдено.</p>`;
+                }
 
-        function addHotel() {
-            const name = document.getElementById("name").value;
-            const location = document.getElementById("location").value;
-            const rating = document.getElementById("rating").value;
-            const amenities = document.getElementById("amenities").value.split(",");
+                resultsContainer.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Ошибка при поиске отелей по рейтингу:", err);
+                resultsContainer.innerHTML = "<p>🚫 Ошибка при выполнении поиска.</p>";
+            });
+    }
 
-            fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, location, rating, amenities })
-            }).then(() => getHotels());
-        }
-
-        function updateHotel() {
-            const id = document.getElementById("update-id").value;
-            const name = document.getElementById("update-name").value;
-            const location = document.getElementById("update-location").value;
-            const rating = document.getElementById("update-rating").value;
-            const amenities = document.getElementById("update-amenities").value.split(",");
-
-            fetch(`${API_URL}/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, location, rating, amenities })
-            }).then(() => getHotels());
-        }
-
-        function fillUpdateForm(id, name, location, rating, amenities) {
-            document.getElementById("update-id").value = id;
-            document.getElementById("update-name").value = name;
-            document.getElementById("update-location").value = location;
-            document.getElementById("update-rating").value = rating;
-            document.getElementById("update-amenities").value = amenities;
-        }
-
-        function deleteHotel(id) {
-            fetch(`${API_URL}/${id}`, { method: "DELETE" })
-                .then(() => getHotels());
-        }
-    </script>
+</script>
 
 </body>
 </html>
