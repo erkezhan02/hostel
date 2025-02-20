@@ -15,17 +15,21 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true })) // For form data
 app.use(express.static("public"));
 
-app.use("/api/hotels", hotelRoutes);
+app.use("/hotels", hotelRoutes);
 
 // Эндпоинт для index.html
 app.get("/index", (req, res) => {
     res.sendFile(path.join(__dirname, "../../../public/index.html"));
 });
 
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/login.html"));
+});
+
 app.use(express.static(path.join(__dirname, "../../../public")));
 
 app.get("/welcome_page", (req, res) => {
-    res.sendFile(path.join(__dirname, "../sent_code/src/app/public/welcome_page.html"));
+    res.sendFile(path.join(__dirname, "../public/welcome_page.html"));
 });
 
 app.use("/api/users", userRoutes)

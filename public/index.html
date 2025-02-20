@@ -9,17 +9,17 @@
 <body>
 
 <h2>Добавить отель</h2>
-<input type="text" id="name" placeholder="Название отеля">
-<input type="text" id="location" placeholder="Город">
-<input type="number" id="rating" placeholder="Рейтинг (1-5)">
-<input type="text" id="amenities" placeholder="Удобства (Wi-Fi, Бассейн)">
+<input type="text" id="name" placeholder="Название отеля" required>
+<input type="text" id="location" placeholder="Город" required>
+<input type="number" id="rating" placeholder="Рейтинг (1-5)" min="1" max="5" required>
+<input type="text" id="amenities" placeholder="Удобства (Wi-Fi, Бассейн)" required>
 <button onclick="addHotel()">Добавить</button>
 
 <h2>Обновить отель</h2>
 <input type="text" id="update-id" placeholder="ID отеля" readonly>
 <input type="text" id="update-name" placeholder="Новое название">
 <input type="text" id="update-location" placeholder="Новый город">
-<input type="number" id="update-rating" placeholder="Новый рейтинг (1-5)">
+<input type="number" id="update-rating" placeholder="Новый рейтинг (1-5)" min="1" max="5">
 <input type="text" id="update-amenities" placeholder="Новые удобства">
 <button onclick="updateHotel()">Обновить</button>
 
@@ -41,17 +41,22 @@
 <button onclick="deleteTestData()">🗑 Удалить тестовые данные</button>
 <div id="index-results"></div>
 
-
 <script>
     const API_URL = "http://localhost:5000/hotels";
     const SEARCH_URL = "http://localhost:5000/hotels/search";
 
+    // Get Authorization Headers
+    function getAuthHeaders() {
+        const token = localStorage.getItem("authToken");
+        return token ? { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+    }
 
-    window.checkIndexes = function () {
+    // Check Indexes
+    function checkIndexes() {
         const resultsContainer = document.getElementById("index-results");
         resultsContainer.innerHTML = "Проверка индексов...";
 
-        fetch(`${API_URL}/check-indexes`)
+        fetch(`${API_URL}/check-indexes`, { headers: getAuthHeaders() })
             .then(res => {
                 if (!res.ok) throw new Error(`Ошибка: ${res.status}`);
                 return res.json();
@@ -61,35 +66,34 @@
                 let html = "<h3>Результаты проверки индексов</h3>";
                 html += "<table border='1' style='width:100%; text-align:center;'>";
                 html += `
-            <tr>
-              <th>Тип индекса</th>
-              <th>Док-ов без индекса</th>
-              <th>Время без индекса (мс)</th>
-              <th>Док-ов с индексом</th>
-              <th>Время с индексом (мс)</th>
-              <th>Разница/Примечание</th>
-            </tr>
-          `;
+                    <tr>
+                        <th>Тип индекса</th>
+                        <th>Док-ов без индекса</th>
+                        <th>Время без индекса (мс)</th>
+                        <th>Док-ов с индексом</th>
+                        <th>Время с индексом (мс)</th>
+                        <th>Разница/Примечание</th>
+                    </tr>
+                `;
 
                 for (const key in data) {
-                    let rowHtml = "";
                     const item = data[key];
+                    let rowHtml = "";
+
                     if (item.error) {
-                        rowHtml = `<tr>
-                <td><b>${key}</b></td>
-                <td colspan="5" style="color: red;">Ошибка: ${item.error}</td>
-              </tr>`;
+                        rowHtml = `<tr><td><b>${key}</b></td><td colspan="5" style="color: red;">Ошибка: ${item.error}</td></tr>`;
                     } else if (item.withoutIndex && item.withIndex) {
                         const improvement = item.withoutIndex.executionTimeMillis - item.withIndex.executionTimeMillis;
                         rowHtml = `<tr>
-                <td><b>${key}</b></td>
-                <td>${item.withoutIndex.totalDocsExamined}</td>
-                <td>${item.withoutIndex.executionTimeMillis} мс</td>
-                <td>${item.withIndex.totalDocsExamined}</td>
-                <td>${item.withIndex.executionTimeMillis} мс</td>
-                <td style="color: ${improvement > 0 ? 'green' : 'red'};">${improvement} мс</td>
-              </tr>`;
+                            <td><b>${key}</b></td>
+                            <td>${item.withoutIndex.totalDocsExamined}</td>
+                            <td>${item.withoutIndex.executionTimeMillis} мс</td>
+                            <td>${item.withIndex.totalDocsExamined}</td>
+                            <td>${item.withIndex.executionTimeMillis} мс</td>
+                            <td style="color: ${improvement > 0 ? 'green' : 'red'};">${improvement} мс</td>
+                        </tr>`;
                     }
+
                     html += rowHtml;
                 }
 
@@ -98,35 +102,38 @@
             })
             .catch(err => {
                 console.error("Ошибка при проверке индексов:", err);
-                document.getElementById("index-results").innerHTML = `Ошибка при проверке индексов: ${err.message}`;
+                resultsContainer.innerHTML = `Ошибка при проверке индексов: ${err.message}`;
             });
-    };
+    }
 
-
+    // Generate Test Data
     function generateTestData() {
-        fetch(`${API_URL}/generate-test-hotels`, { method: "POST" })
+        fetch(`${API_URL}/generate-test-hotels`, {
+            method: "POST",
+            headers: getAuthHeaders()
+        })
             .then(res => res.json())
             .then(data => alert(data.message))
             .catch(err => alert("Ошибка: " + err.message));
     }
 
+    // Delete Test Data
     function deleteTestData() {
-        fetch("http://localhost:5000/hotels/delete-test-hotels", { method: "DELETE" })
-            .then(async res => {
-                // Если статус не 2xx, выбрасываем ошибку с текстом ответа
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || `Ошибка: ${res.status}`);
-                }
-                return res.json();
-            })
+        fetch(`${API_URL}/delete-test-hotels`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        })
+            .then(res => res.json())
             .then(data => alert(data.message))
             .catch(err => alert("Ошибка при удалении тестовых данных: " + err.message));
     }
 
-
+    // Get Hotels
     function getHotels() {
-        fetch(API_URL)
+        fetch(API_URL, {
+            method: "GET",
+            headers: getAuthHeaders()
+        })
             .then(res => res.json())
             .then(data => {
                 const hotelsContainer = document.querySelector(".hotels");
@@ -144,38 +151,53 @@
                 });
                 hotelsContainer.innerHTML = html;
             })
-            .catch(err => {
-                console.error("Ошибка при загрузке отелей:", err);
-            });
+            .catch(err => console.error("Ошибка при загрузке отелей:", err));
     }
 
+    // Add Hotel
     function addHotel() {
         const name = document.getElementById("name").value;
         const location = document.getElementById("location").value;
-        const rating = document.getElementById("rating").value;
-        const amenities = document.getElementById("amenities").value.split(",");
+        const rating = parseInt(document.getElementById("rating").value);
+        const amenities = document.getElementById("amenities").value.split(",").map(item => item.trim());
+
+        if (!name || !location || !rating || amenities.length === 0) {
+            alert("Все поля должны быть заполнены.");
+            return;
+        }
 
         fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ name, location, rating, amenities })
-        }).then(() => getHotels());
+        })
+            .then(() => getHotels())
+            .catch(err => alert("Ошибка при добавлении отеля: " + err.message));
     }
 
+    // Update Hotel
     function updateHotel() {
         const id = document.getElementById("update-id").value;
         const name = document.getElementById("update-name").value;
         const location = document.getElementById("update-location").value;
-        const rating = document.getElementById("update-rating").value;
-        const amenities = document.getElementById("update-amenities").value.split(",");
+        const rating = parseInt(document.getElementById("update-rating").value);
+        const amenities = document.getElementById("update-amenities").value.split(",").map(item => item.trim());
+
+        if (!id || !name || !location || !rating || amenities.length === 0) {
+            alert("Все поля должны быть заполнены.");
+            return;
+        }
 
         fetch(`${API_URL}/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ name, location, rating, amenities })
-        }).then(() => getHotels());
+        })
+            .then(() => getHotels())
+            .catch(err => alert("Ошибка при обновлении отеля: " + err.message));
     }
 
+    // Fill Update Form
     function fillUpdateForm(id, name, location, rating, amenities) {
         document.getElementById("update-id").value = id;
         document.getElementById("update-name").value = name;
@@ -184,48 +206,52 @@
         document.getElementById("update-amenities").value = amenities;
     }
 
+    // Delete Hotel
     function deleteHotel(id) {
-        fetch(`${API_URL}/${id}`, { method: "DELETE" })
-            .then(() => getHotels());
+        fetch(`${API_URL}/${id}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        })
+            .then(() => getHotels())
+            .catch(err => alert("Ошибка при удалении отеля: " + err.message));
     }
 
+    // Search Hotels by Rating
     function searchHotelsByRating() {
-        const minRating = parseFloat(document.getElementById("min-rating").value) || 1;
-        const maxRating = parseFloat(document.getElementById("max-rating").value) || 5;
+        const minRating = parseInt(document.getElementById("min-rating").value) || 1;
+        const maxRating = parseInt(document.getElementById("max-rating").value) || 5;
         const resultsContainer = document.getElementById("rating-results");
 
-        resultsContainer.innerHTML = "<p> Загрузка результатов...</p>";
+        resultsContainer.innerHTML = "<p>Загрузка результатов...</p>";
 
-        fetch(`${SEARCH_URL}?minRating=${minRating}&maxRating=${maxRating}`)
+        fetch(`${SEARCH_URL}?minRating=${minRating}&maxRating=${maxRating}`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        })
             .then(res => res.json())
             .then(data => {
                 if (!data.length) {
-                    resultsContainer.innerHTML = "<p> Отелей с таким рейтингом не найдено.</p>";
+                    resultsContainer.innerHTML = "<p>Отелей с таким рейтингом не найдено.</p>";
                     return;
                 }
 
                 let html = "";
-
-                // Перебор групп по диапазонам рейтинга ($bucket)
                 data.forEach(group => {
-                    html += `
-                <div class="rating-group">
-                    <p>Количество отелей: ${group.count}</p>
-                    <div class="hotel-list">
-                `;
+                    html += `<div class="rating-group">
+                <p>Количество отелей: ${group.count}</p>
+                <div class="hotel-list">`;
 
-                    // Отображение каждого отеля в группе
                     group.hotels.forEach(hotel => {
-                        html += `
-                    <div class="hotel-card">
-                        <h4>${hotel.name}</h4>
-                        <p><b>Местоположение:</b> ${hotel.location}</p>
-                        <p><b>Рейтинг:</b> ${hotel.rating}</p>
-                        <p><b>Удобства:</b> ${hotel.amenities?.length ? hotel.amenities.join(", ") : "Нет данных"}</p>
-                        <button onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}')">✏️ Редактировать</button>
-                        <button onclick="deleteHotel('${hotel._id}')"> Удалить</button>
-                    </div>
-                `;
+                        const amenities = hotel.amenities && Array.isArray(hotel.amenities) ? hotel.amenities.join(", ") : "Нет данных";
+
+                        html += `<div class="hotel-card">
+                    <h4>${hotel.name}</h4>
+                    <p><b>Местоположение:</b> ${hotel.location}</p>
+                    <p><b>Рейтинг:</b> ${hotel.rating}</p>
+                    <p><b>Удобства:</b> ${amenities}</p>
+                    <button onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${amenities}')"> Редактировать</button>
+                    <button onclick="deleteHotel('${hotel._id}')"> Удалить</button>
+                </div>`;
                     });
 
                     html += `</div></div><hr/>`;
@@ -234,12 +260,12 @@
                 resultsContainer.innerHTML = html;
             })
             .catch(err => {
-                console.error(" Ошибка при выполнении поиска:", err);
-                resultsContainer.innerHTML = "<p> Не удалось загрузить отели. Попробуйте снова.</p>";
+                console.error("Ошибка при поиске:", err);
+                resultsContainer.innerHTML = "<p>Не удалось загрузить отели. Попробуйте снова.</p>";
             });
-
     }
 
 </script>
+
 </body>
 </html>
