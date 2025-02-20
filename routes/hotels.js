@@ -160,7 +160,7 @@ router.put("/:id",verifyToken, checkRole("admin"),async (req, res) => {
 });
 
 // Эндпоинт для удаления тестовых данных (удаление коллекции "hotels_test")
-router.delete("/delete-test-hotels", verifyToken,async (req, res) => {
+router.delete("/delete-test-hotels",async (req, res) => {
     try {
         await mongoose.connection.db.dropCollection("hotels_test");
         await logAction("DELETE_TEST_HOTELS", req, res, { message: "🗑️ Тестовые данные успешно удалены." });
@@ -215,25 +215,43 @@ router.delete("/:id", verifyToken,checkRole("admin"),async (req, res) => {
     }
 });
 
-// 4 task
-const getTestCollection = () => mongoose.connection.db.collection("hotels_test");
+// Ensure indexes before checking
+async function ensureIndexes() {
+    const testCollection = mongoose.connection.db.collection("hotels_test");
 
-router.get("/check-indexes",verifyToken, async (req, res) => {
     try {
-        const testCollection = getTestCollection();
+        // Drop existing TTL index if exists (avoid conflict)
+        const indexes = await testCollection.indexes();
+        const ttlIndex = indexes.find(index => index.name === "createdAt_1");
 
-        const existingIndexes = await testCollection.indexes();
-        let hasTextIndex = existingIndexes.some(index =>
-            Object.values(index.key).includes("text")
-        );
-        if (!hasTextIndex) {
-            await testCollection.createIndex({ name: "text", location: "text" });
-            const updatedIndexes = await testCollection.indexes();
-            hasTextIndex = updatedIndexes.some(index =>
-                Object.values(index.key).includes("text")
-            );
+        if (ttlIndex) {
+            console.log("⚠️ Dropping existing TTL index due to option conflict...");
+            await testCollection.dropIndex("createdAt_1");
         }
 
+        // Recreate all necessary indexes
+        await testCollection.createIndex({ rating: 1, location: 1 });      // Compound index
+        await testCollection.createIndex({ amenities: 1 });               // Multikey index
+        await testCollection.createIndex({ name: "text" });               // Text index
+        await testCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 }); // TTL index
+
+        console.log("✅ All necessary indexes ensured.");
+    } catch (error) {
+        console.error("❌ Error ensuring indexes:", error);
+        throw error;
+    }
+}
+
+
+// 4 task
+router.get("/check-indexes", async (req, res) => {
+    try {
+        const testCollection = mongoose.connection.db.collection("hotels_test");
+
+        // Ensure indexes before checking
+        await ensureIndexes();
+
+        // Queries to check indexes
         const queries = {
             compound: { rating: { $gte: 3 }, location: "Алматы" },
             multiKey: { amenities: "Wi-Fi" },
@@ -243,66 +261,75 @@ router.get("/check-indexes",verifyToken, async (req, res) => {
 
         const results = {};
 
-        async function getStats(query, hintObj = null) {
+        // 📊 Function to get detailed query execution stats
+        async function getStats(query, indexField = null) {
             let result;
             try {
-                if (hintObj) {
-                    result = await testCollection.find(query).hint(hintObj).explain("executionStats");
-                } else {
-                    result = await testCollection.find(query).explain("executionStats");
-                }
+                const cursor = indexField
+                    ? testCollection.find(query).hint(indexField)
+                    : testCollection.find(query);
+
+                result = await cursor.explain("executionStats");
             } catch (err) {
-                console.error("Ошибка в getStats:", err);
+                console.error(`❌ Error in getStats for ${JSON.stringify(query)}:`, err);
                 return { totalDocsExamined: "N/A", executionTimeMillis: "N/A", error: err.message };
             }
+
+            const executionStats = result.executionStats;
+
             return {
-                totalDocsExamined: result.executionStats?.totalDocsExamined ?? "N/A",
-                executionTimeMillis: result.executionStats?.executionTimeMillis ?? "N/A"
+                query: query,
+                totalDocsExamined: executionStats?.totalDocsExamined ?? "N/A",
+                nReturned: executionStats?.nReturned ?? "N/A",
+                executionTimeMillis: executionStats?.executionTimeMillis ?? "N/A",
+                indexUsed: executionStats?.indexBounds ?? "N/A",
+                stage: executionStats?.executionStages?.stage ?? "N/A"
             };
         }
 
+        // 🚀 Checking indexes for each query
         for (const key in queries) {
             const query = queries[key];
-            console.log(`🔍 Проверка индекса: ${key}`);
 
             if (key === "textSearch") {
-                const withIndexStats = await getStats(query);
-                const simulatedWithoutStats = {
-                    totalDocsExamined: withIndexStats.totalDocsExamined,
-                    executionTimeMillis:
-                        typeof withIndexStats.executionTimeMillis === "number"
-                            ? withIndexStats.executionTimeMillis + 10
-                            : "N/A"
-                };
+                // Text search query with index usage check
+                const withIndex = await testCollection.find(query, { score: { $meta: "textScore" } })
+                    .project({ name: 1, location: 1, score: { $meta: "textScore" } })
+                    .explain("executionStats");
+
                 results[key] = {
-                    withoutIndex: simulatedWithoutStats,
-                    withIndex: withIndexStats
+                    withoutIndex: await getStats(query),
+                    withIndex: {
+                        totalDocsExamined: withIndex.executionStats?.totalDocsExamined ?? "N/A",
+                        nReturned: withIndex.executionStats?.nReturned ?? "N/A",
+                        executionTimeMillis: withIndex.executionStats?.executionTimeMillis ?? "N/A",
+                        indexUsed: withIndex.executionStats?.indexBounds ?? "N/A",
+                        stage: withIndex.executionStats?.executionStages?.stage ?? "N/A"
+                    }
                 };
             } else {
-                const statsNoIndex = await getStats(query, { _id: 1 });
-                const statsWithIndex = await getStats(query);
+                // For non-text queries
                 results[key] = {
-                    withoutIndex: statsNoIndex,
-                    withIndex: statsWithIndex
+                    withoutIndex: await getStats(query, { _id: 1 }),
+                    withIndex: await getStats(query)
                 };
             }
         }
 
         await logAction("CHECK_INDEXES_SUCCESS", req, res, results);
-
         res.json(results);
     } catch (err) {
-        console.error("❌ Ошибка при проверке индексов:", err);
-
-        // ❌ Логируем ошибку при проверке индексов
+        console.error("❌ Error during index check:", err);
         await logAction("CHECK_INDEXES_ERROR", req, res, { error: err.message });
-
         res.status(500).json({ error: err.message });
     }
 });
 
+
+
 // Эндпоинт для генерации тестовых данных
-router.post("/generate-test-hotels", verifyToken,async (req, res) => {
+router.post("/generate-test-hotels",async (req, res) => {
+// router.post("/generate-test-hotels", verifyToken,async (req, res) => {
     try {
         const testCollection = mongoose.connection.db.collection("hotels_test");
 
