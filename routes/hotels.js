@@ -1,14 +1,30 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Hotel = require("../models/hotel");
+const Log = require("../sent_code/src/models/log");
 const router = express.Router();
+
+async function logAction(action, req, res, responseData) {
+    await Log.create({
+        action,
+        endpoint: req.originalUrl,
+        method: req.method,
+        user: req.user?.email || "Anonymous",
+        requestData: req.body,
+        responseData,
+        statusCode: res.statusCode,
+        timestamp: new Date()
+    });
+}
 
 // ✅ Получить список отелей
 router.get("/", async (req, res) => {
     try {
         const hotels = await Hotel.find();
+        await logAction("GET_HOTELS", req, res, hotels);
         res.json(hotels);
     } catch (err) {
+        await logAction("GET_HOTELS_ERROR", req, res, { error: err.message });
         res.status(500).json({ error: err.message });
     }
 });
@@ -89,10 +105,14 @@ router.get("/search", async (req, res) => {
             }
         ];
 
+        // Запуск pipeline
         await Hotel.aggregate(pipeline);
 
         // Получение результатов из коллекции
         const result = await mongoose.connection.db.collection("hotelSearchResults").find({}).toArray();
+
+        // 📝 Логируем результат, а не промежуточные данные
+        await logAction("SEARCH_HOTELS", req, res, result);
 
         if (result.length === 0) {
             return res.status(404).json({ message: "Отелей с таким рейтингом не найдено." });
@@ -100,6 +120,7 @@ router.get("/search", async (req, res) => {
 
         res.json(result);
     } catch (err) {
+        await logAction("SEARCH_HOTELS_ERROR", req, res, { error: err.message });
         console.error("❌ Ошибка при поиске отелей:", err);
         res.status(500).json({ error: err.message });
     }
@@ -111,8 +132,10 @@ router.post("/", async (req, res) => {
     try {
         const hotel = new Hotel(req.body);
         await hotel.save();
+        await logAction("CREATE_HOTEL", req, res, hotel);
         res.status(201).json(hotel);
     } catch (err) {
+        await logAction("CREATE_HOTEL_ERROR", req, res, { error: err.message });
         res.status(400).json({ error: err.message });
     }
 });
@@ -121,9 +144,14 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
-        if (!hotel) return res.status(404).json({ error: "Отель не найден" });
+        if (!hotel) {
+            await logAction("UPDATE_HOTEL_NOT_FOUND", req, res, { error: "Отель не найден" });
+            return res.status(404).json({ error: "Отель не найден" });
+        }
+        await logAction("UPDATE_HOTEL", req, res, hotel);
         res.json(hotel);
     } catch (err) {
+        await logAction("UPDATE_HOTEL_ERROR", req, res, { error: err.message });
         res.status(400).json({ error: err.message });
     }
 });
@@ -132,13 +160,15 @@ router.put("/:id", async (req, res) => {
 router.delete("/delete-test-hotels", async (req, res) => {
     try {
         await mongoose.connection.db.dropCollection("hotels_test");
-        return res.json({ message: "🗑️ Тестовые данные (коллекция hotels_test) успешно удалены." });
+        await logAction("DELETE_TEST_HOTELS", req, res, { message: "🗑️ Тестовые данные успешно удалены." });
+        res.json({ message: "🗑️ Тестовые данные успешно удалены." });
     } catch (error) {
         if (error.codeName === "NamespaceNotFound") {
+            await logAction("DELETE_TEST_HOTELS_NOT_FOUND", req, res, { message: "Коллекция hotels_test не существует." });
             return res.json({ message: "Коллекция hotels_test не существует." });
         }
-        console.error("❌ Ошибка при удалении данных:", error);
-        return res.status(500).json({ error: error.message });
+        await logAction("DELETE_TEST_HOTELS_ERROR", req, res, { error: error.message });
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -146,8 +176,10 @@ router.delete("/delete-test-hotels", async (req, res) => {
 router.put("/:id/add-amenity", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $push: { amenities: req.body.amenity } }, { new: true });
+        await logAction("ADD_AMENITY", req, res, hotel);
         res.json(hotel);
     } catch (err) {
+        await logAction("ADD_AMENITY_ERROR", req, res, { error: err.message });
         res.status(400).json({ error: err.message });
     }
 });
@@ -156,19 +188,26 @@ router.put("/:id/add-amenity", async (req, res) => {
 router.put("/:id/remove-amenity", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $pull: { amenities: req.body.amenity } }, { new: true });
+        await logAction("REMOVE_AMENITY", req, res, hotel);
         res.json(hotel);
     } catch (err) {
+        await logAction("REMOVE_AMENITY_ERROR", req, res, { error: err.message });
         res.status(400).json({ error: err.message });
     }
 });
-
 
 // ✅ Удалить отель
 router.delete("/:id", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndDelete(req.params.id);
+        if (!hotel) {
+            await logAction("DELETE_HOTEL_NOT_FOUND", req, res, { error: "Отель не найден" });
+            return res.status(404).json({ error: "Отель не найден" });
+        }
+        await logAction("DELETE_HOTEL", req, res, hotel);
         res.json({ message: "Отель удален" });
     } catch (err) {
+        await logAction("DELETE_HOTEL_ERROR", req, res, { error: err.message });
         res.status(500).json({ error: err.message });
     }
 });
@@ -246,9 +285,15 @@ router.get("/check-indexes", async (req, res) => {
             }
         }
 
+        await logAction("CHECK_INDEXES_SUCCESS", req, res, results);
+
         res.json(results);
     } catch (err) {
         console.error("❌ Ошибка при проверке индексов:", err);
+
+        // ❌ Логируем ошибку при проверке индексов
+        await logAction("CHECK_INDEXES_ERROR", req, res, { error: err.message });
+
         res.status(500).json({ error: err.message });
     }
 });
@@ -256,14 +301,14 @@ router.get("/check-indexes", async (req, res) => {
 // Эндпоинт для генерации тестовых данных
 router.post("/generate-test-hotels", async (req, res) => {
     try {
-        const testCollection = getTestCollection();
+        const testCollection = mongoose.connection.db.collection("hotels_test");
 
         const existingCount = await testCollection.countDocuments();
         if (existingCount > 0) {
+            await logAction("GENERATE_TEST_HOTELS_SKIPPED", req, res, { message: "⚠️ Тестовые данные уже существуют." });
             return res.status(400).json({ message: "⚠️ Тестовые данные уже существуют." });
         }
 
-        // Генерация 10,000 тест данных
         const testData = [];
         for (let i = 0; i < 10000; i++) {
             testData.push({
@@ -276,13 +321,13 @@ router.post("/generate-test-hotels", async (req, res) => {
         }
 
         await testCollection.insertMany(testData);
-        await testCollection.createIndex({ name: "text", location: "text" });
-
-        res.json({ message: "✅ 10,000 тестовых отелей добавлено в коллекцию hotels_test и текстовый индекс создан." });
+        await logAction("GENERATE_TEST_HOTELS", req, res, { message: "✅ 10,000 тестовых отелей добавлено." });
+        res.json({ message: "✅ 10,000 тестовых отелей добавлено." });
     } catch (error) {
-        console.error("❌ Ошибка при генерации тестовых данных:", error);
+        await logAction("GENERATE_TEST_HOTELS_ERROR", req, res, { error: error.message });
         res.status(500).json({ error: error.message });
     }
 });
+
 
 module.exports = router;

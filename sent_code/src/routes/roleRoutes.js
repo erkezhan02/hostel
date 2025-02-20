@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const roleController = require("../controllers/roleController");
+const logAction = require("../middlewares/logMiddleware");
 
-router.get("/", roleController.getRoles);          // Получить все роли
-router.post("/", roleController.createRole);       // Создать новую роль
-router.put("/:id", roleController.updateRole);     // Обновить роль по _id
-router.delete("/:id", roleController.deleteRole);  // Удалить роль по _id
+router.get("/", logAction, roleController.getRoles);
+router.post("/", logAction, roleController.createRole);
+router.put("/:id", logAction, roleController.updateRole);
+router.delete("/:id", logAction, roleController.deleteRole);
 
 module.exports = router;

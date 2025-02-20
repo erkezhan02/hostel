@@ -1,17 +1,16 @@
 const Role = require("../models/Role");
-
-
+const Log = require("../models/Log");
 
 // 📌 Получить все роли
 exports.getRoles = async (req, res) => {
     try {
         const roles = await Role.find();
+        res.locals.responseData = roles; // Для логирования ответа
         res.status(200).json(roles);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 // 📌 Создать новую роль
 exports.createRole = async (req, res) => {
@@ -28,14 +27,14 @@ exports.createRole = async (req, res) => {
         const newRole = new Role({ name, description });
         await newRole.save();
 
+        res.locals.responseData = newRole; // Для логирования
         res.status(201).json({ message: "✅ Роль успешно создана.", role: newRole });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-// 📌 Обновить роль по roleId
-// 📌 Обновить существующую роль по _id
+// 📌 Обновить роль по _id
 exports.updateRole = async (req, res) => {
     try {
         const { id } = req.params;
@@ -59,13 +58,13 @@ exports.updateRole = async (req, res) => {
             return res.status(404).json({ message: "❌ Роль не найдена." });
         }
 
+        res.locals.responseData = updatedRole; // Для логирования
         res.status(200).json({ message: "✅ Роль успешно обновлена.", role: updatedRole });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-// 📌 Удалить роль по roleId
 // 📌 Удалить роль по _id
 exports.deleteRole = async (req, res) => {
     try {
@@ -77,9 +76,9 @@ exports.deleteRole = async (req, res) => {
             return res.status(404).json({ message: "❌ Роль не найдена." });
         }
 
+        res.locals.responseData = deletedRole; // Для логирования
         res.status(200).json({ message: "🗑️ Роль успешно удалена.", role: deletedRole });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
