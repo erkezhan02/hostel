@@ -21,7 +21,7 @@ const logAction = async (req, res, next) => {
             await Log.create(logEntry);
             console.log(`📝 Лог записан: ${logEntry.action}`);
         } catch (error) {
-            console.error("❌ Ошибка при записи лога:", error.message);
+            console.error(" Ошибка при записи лога:", error.message);
         }
     });
 

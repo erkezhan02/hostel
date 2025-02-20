@@ -104,7 +104,7 @@ router.get("/image/:id", async (req, res) => {
     }
 });
 
-// ✅ Получить список отелей
+// Получить список отелей
 router.get("/", async (req, res) => {
     try {
         const hotels = await Hotel.find();
@@ -164,7 +164,7 @@ router.get("/search", async (req, res) => {
 
 
 
-// ✅ Создать отель
+// Создать отель
 router.post("/", async (req, res) => {
     try {
         const hotel = new Hotel(req.body);
@@ -175,7 +175,7 @@ router.post("/", async (req, res) => {
     }
 });
 
-// ✅ Обновить отель ($set)
+// Обновить отель ($set)
 router.put("/:id", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
@@ -186,7 +186,7 @@ router.put("/:id", async (req, res) => {
     }
 });
 
-// ✅ Добавить удобство в `amenities` ($push)
+// Добавить удобство в `amenities` ($push)
 router.put("/:id/add-amenity", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $push: { amenities: req.body.amenity } }, { new: true });
@@ -196,7 +196,7 @@ router.put("/:id/add-amenity", async (req, res) => {
     }
 });
 
-// ✅ Удалить удобство из `amenities` ($pull)
+// Удалить удобство из `amenities` ($pull)
 router.put("/:id/remove-amenity", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $pull: { amenities: req.body.amenity } }, { new: true });
@@ -206,7 +206,7 @@ router.put("/:id/remove-amenity", async (req, res) => {
     }
 });
 
-// ✅ Удалить отель
+// Удалить отель
 router.delete("/:id", async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndDelete(req.params.id);

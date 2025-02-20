@@ -17,11 +17,11 @@ router.delete("/:id", verifyToken, logAction, async (req, res) => {
         const userId = req.params.id;
         const user = await User.findByIdAndDelete(userId);
         if (!user) {
-            return res.status(404).json({ message: "❌ Пользователь не найден." });
+            return res.status(404).json({ message: " Пользователь не найден." });
         }
-        res.json({ message: "✅ Пользователь успешно удален." });
+        res.json({ message: " Пользователь успешно удален." });
     } catch (error) {
-        res.status(500).json({ message: "❌ Ошибка при удалении пользователя." });
+        res.status(500).json({ message: " Ошибка при удалении пользователя." });
     }
 });
 

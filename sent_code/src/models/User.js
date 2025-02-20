@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema({
     roleId: { type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true }
 });
 
-// 🔑 Хеширование пароля перед сохранением
+// Хеширование пароля перед сохранением
 UserSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
 
@@ -21,7 +21,7 @@ UserSchema.pre("save", async function (next) {
     }
 });
 
-// 🔒 Сравнение пароля
+//  Сравнение пароля
 UserSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };

@@ -35,9 +35,9 @@
 </div>
 <div id="rating-results" class="hotels"></div>
 
-<h2>🔬 Тестовые данные для индексов</h2>
-<button onclick="generateTestData()">🚀 Создать тестовые данные</button>
-<button onclick="checkIndexes()">🔍 Проверить индексы</button>
+<h2>Тестовые данные для индексов</h2>
+<button onclick="generateTestData()">Создать тестовые данные</button>
+<button onclick="checkIndexes()">Проверить индексы</button>
 <button onclick="deleteTestData()">🗑 Удалить тестовые данные</button>
 <div id="index-results"></div>
 
@@ -49,7 +49,7 @@
 
     window.checkIndexes = function () {
         const resultsContainer = document.getElementById("index-results");
-        resultsContainer.innerHTML = "⏳ Проверка индексов...";
+        resultsContainer.innerHTML = "Проверка индексов...";
 
         fetch(`${API_URL}/check-indexes`)
             .then(res => {
@@ -57,8 +57,8 @@
                 return res.json();
             })
             .then(data => {
-                console.log("✅ Результаты индексации:", data);
-                let html = "<h3>📊 Результаты проверки индексов</h3>";
+                console.log("Результаты индексации:", data);
+                let html = "<h3>Результаты проверки индексов</h3>";
                 html += "<table border='1' style='width:100%; text-align:center;'>";
                 html += `
             <tr>
@@ -97,8 +97,8 @@
                 resultsContainer.innerHTML = html;
             })
             .catch(err => {
-                console.error("❌ Ошибка при проверке индексов:", err);
-                document.getElementById("index-results").innerHTML = `🚫 Ошибка при проверке индексов: ${err.message}`;
+                console.error("Ошибка при проверке индексов:", err);
+                document.getElementById("index-results").innerHTML = `Ошибка при проверке индексов: ${err.message}`;
             });
     };
 
@@ -210,7 +210,7 @@
                 data.forEach(group => {
                     html += `
                 <div class="rating-group">
-                    <p>🏨 Количество отелей: ${group.count}</p>
+                    <p>Количество отелей: ${group.count}</p>
                     <div class="hotel-list">
                 `;
 
@@ -219,11 +219,11 @@
                         html += `
                     <div class="hotel-card">
                         <h4>${hotel.name}</h4>
-                        <p><b>📍 Местоположение:</b> ${hotel.location}</p>
-                        <p><b>⭐ Рейтинг:</b> ${hotel.rating}</p>
-                        <p><b>🛏️ Удобства:</b> ${hotel.amenities?.length ? hotel.amenities.join(", ") : "Нет данных"}</p>
+                        <p><b>Местоположение:</b> ${hotel.location}</p>
+                        <p><b>Рейтинг:</b> ${hotel.rating}</p>
+                        <p><b>Удобства:</b> ${hotel.amenities?.length ? hotel.amenities.join(", ") : "Нет данных"}</p>
                         <button onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}')">✏️ Редактировать</button>
-                        <button onclick="deleteHotel('${hotel._id}')">🗑️ Удалить</button>
+                        <button onclick="deleteHotel('${hotel._id}')"> Удалить</button>
                     </div>
                 `;
                     });

@@ -20,7 +20,7 @@ async function logAction(action, req, res, responseData) {
     });
 }
 
-// ✅ Получить список отелей
+// Получить список отелей
 router.get("/", verifyToken, async (req, res) => {
     try {
         const hotels = await Hotel.find();
@@ -111,10 +111,8 @@ router.get("/search", verifyToken, async (req, res) => {
         // Запуск pipeline
         await Hotel.aggregate(pipeline);
 
-        // Получение результатов из коллекции
         const result = await mongoose.connection.db.collection("hotelSearchResults").find({}).toArray();
 
-        // 📝 Логируем результат, а не промежуточные данные
         await logAction("SEARCH_HOTELS", req, res, result);
 
         if (result.length === 0) {
@@ -124,13 +122,13 @@ router.get("/search", verifyToken, async (req, res) => {
         res.json(result);
     } catch (err) {
         await logAction("SEARCH_HOTELS_ERROR", req, res, { error: err.message });
-        console.error("❌ Ошибка при поиске отелей:", err);
+        console.error(" Ошибка при поиске отелей:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
 
-// ✅ Создать отель
+// Создать отель
 router.post("/", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = new Hotel(req.body);
@@ -143,7 +141,7 @@ router.post("/", verifyToken,checkRole("admin"),async (req, res) => {
     }
 });
 
-// ✅ Обновить отель ($set)
+// Обновить отель ($set)
 router.put("/:id",verifyToken, checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
@@ -164,7 +162,7 @@ router.delete("/delete-test-hotels",async (req, res) => {
     try {
         await mongoose.connection.db.dropCollection("hotels_test");
         await logAction("DELETE_TEST_HOTELS", req, res, { message: "🗑️ Тестовые данные успешно удалены." });
-        res.json({ message: "🗑️ Тестовые данные успешно удалены." });
+        res.json({ message: " Тестовые данные успешно удалены." });
     } catch (error) {
         if (error.codeName === "NamespaceNotFound") {
             await logAction("DELETE_TEST_HOTELS_NOT_FOUND", req, res, { message: "Коллекция hotels_test не существует." });
@@ -175,7 +173,7 @@ router.delete("/delete-test-hotels",async (req, res) => {
     }
 });
 
-// ✅ Добавить удобство в `amenities` ($push)
+// Добавить удобство в `amenities` ($push)
 router.put("/:id/add-amenity", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $push: { amenities: req.body.amenity } }, { new: true });
@@ -187,7 +185,7 @@ router.put("/:id/add-amenity", verifyToken,checkRole("admin"),async (req, res) =
     }
 });
 
-// ✅ Удалить удобство из `amenities` ($pull)
+// Удалить удобство из `amenities` ($pull)
 router.put("/:id/remove-amenity", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $pull: { amenities: req.body.amenity } }, { new: true });
@@ -199,7 +197,7 @@ router.put("/:id/remove-amenity", verifyToken,checkRole("admin"),async (req, res
     }
 });
 
-// ✅ Удалить отель
+// Удалить отель
 router.delete("/:id", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndDelete(req.params.id);
@@ -225,7 +223,7 @@ async function ensureIndexes() {
         const ttlIndex = indexes.find(index => index.name === "createdAt_1");
 
         if (ttlIndex) {
-            console.log("⚠️ Dropping existing TTL index due to option conflict...");
+            console.log(" Dropping existing TTL index due to option conflict...");
             await testCollection.dropIndex("createdAt_1");
         }
 
@@ -235,16 +233,16 @@ async function ensureIndexes() {
         await testCollection.createIndex({ name: "text" });               // Text index
         await testCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 }); // TTL index
 
-        console.log("✅ All necessary indexes ensured.");
+        console.log(" All necessary indexes ensured.");
     } catch (error) {
-        console.error("❌ Error ensuring indexes:", error);
+        console.error(" Error ensuring indexes:", error);
         throw error;
     }
 }
 
 
 // 4 task
-router.get("/check-indexes", async (req, res) => {
+router.get("/check-indexes",verifyToken, async (req, res) => {
     try {
         const testCollection = mongoose.connection.db.collection("hotels_test");
 
@@ -271,7 +269,7 @@ router.get("/check-indexes", async (req, res) => {
 
                 result = await cursor.explain("executionStats");
             } catch (err) {
-                console.error(`❌ Error in getStats for ${JSON.stringify(query)}:`, err);
+                console.error(` Error in getStats for ${JSON.stringify(query)}:`, err);
                 return { totalDocsExamined: "N/A", executionTimeMillis: "N/A", error: err.message };
             }
 
@@ -319,7 +317,7 @@ router.get("/check-indexes", async (req, res) => {
         await logAction("CHECK_INDEXES_SUCCESS", req, res, results);
         res.json(results);
     } catch (err) {
-        console.error("❌ Error during index check:", err);
+        console.error("Error during index check:", err);
         await logAction("CHECK_INDEXES_ERROR", req, res, { error: err.message });
         res.status(500).json({ error: err.message });
     }
@@ -328,15 +326,14 @@ router.get("/check-indexes", async (req, res) => {
 
 
 // Эндпоинт для генерации тестовых данных
-router.post("/generate-test-hotels",async (req, res) => {
-// router.post("/generate-test-hotels", verifyToken,async (req, res) => {
+router.post("/generate-test-hotels",verifyToken,async (req, res) => {
     try {
         const testCollection = mongoose.connection.db.collection("hotels_test");
 
         const existingCount = await testCollection.countDocuments();
         if (existingCount > 0) {
-            await logAction("GENERATE_TEST_HOTELS_SKIPPED", req, res, { message: "⚠️ Тестовые данные уже существуют." });
-            return res.status(400).json({ message: "⚠️ Тестовые данные уже существуют." });
+            await logAction("GENERATE_TEST_HOTELS_SKIPPED", req, res, { message: "Тестовые данные уже существуют." });
+            return res.status(400).json({ message: " Тестовые данные уже существуют." });
         }
 
         const testData = [];
@@ -351,8 +348,8 @@ router.post("/generate-test-hotels",async (req, res) => {
         }
 
         await testCollection.insertMany(testData);
-        await logAction("GENERATE_TEST_HOTELS", req, res, { message: "✅ 10,000 тестовых отелей добавлено." });
-        res.json({ message: "✅ 10,000 тестовых отелей добавлено." });
+        await logAction("GENERATE_TEST_HOTELS", req, res, { message: "10,000 тестовых отелей добавлено." });
+        res.json({ message: "10,000 тестовых отелей добавлено." });
     } catch (error) {
         await logAction("GENERATE_TEST_HOTELS_ERROR", req, res, { error: error.message });
         res.status(500).json({ error: error.message });
