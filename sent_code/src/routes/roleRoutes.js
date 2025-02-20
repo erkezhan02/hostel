@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 const roleController = require("../controllers/roleController");
 const logAction = require("../middlewares/logMiddleware");
+const checkRole = require("../middlewares/checkRole");
 
-router.get("/", logAction, roleController.getRoles);
-router.post("/", logAction, roleController.createRole);
-router.put("/:id", logAction, roleController.updateRole);
-router.delete("/:id", logAction, roleController.deleteRole);
+router.get("/",checkRole("admin"), logAction, roleController.getRoles);
+router.post("/", checkRole("admin"),logAction, roleController.createRole);
+router.put("/:id",checkRole("admin"), logAction, roleController.updateRole);
+router.delete("/:id", checkRole("admin"),logAction, roleController.deleteRole);
 
 module.exports = router;

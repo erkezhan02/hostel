@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Hotel = require("../models/hotel");
 const Log = require("../sent_code/src/models/log");
+const { verifyToken } = require("../sent_code/src/middlewares/authMiddleware");
+const checkRole = require("../sent_code/src/middlewares/checkRole");
+
 const router = express.Router();
 
 async function logAction(action, req, res, responseData) {
@@ -18,7 +21,7 @@ async function logAction(action, req, res, responseData) {
 }
 
 // ✅ Получить список отелей
-router.get("/", async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
     try {
         const hotels = await Hotel.find();
         await logAction("GET_HOTELS", req, res, hotels);
@@ -30,7 +33,7 @@ router.get("/", async (req, res) => {
 });
 
 // search (2 task)
-router.get("/search", async (req, res) => {
+router.get("/search", verifyToken, async (req, res) => {
     const minRating = req.query.minRating ? parseFloat(req.query.minRating) : 1;
     const maxRating = req.query.maxRating ? parseFloat(req.query.maxRating) : 5;
 
@@ -128,7 +131,7 @@ router.get("/search", async (req, res) => {
 
 
 // ✅ Создать отель
-router.post("/", async (req, res) => {
+router.post("/", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = new Hotel(req.body);
         await hotel.save();
@@ -141,7 +144,7 @@ router.post("/", async (req, res) => {
 });
 
 // ✅ Обновить отель ($set)
-router.put("/:id", async (req, res) => {
+router.put("/:id",verifyToken, checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
         if (!hotel) {
@@ -157,7 +160,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Эндпоинт для удаления тестовых данных (удаление коллекции "hotels_test")
-router.delete("/delete-test-hotels", async (req, res) => {
+router.delete("/delete-test-hotels", verifyToken,async (req, res) => {
     try {
         await mongoose.connection.db.dropCollection("hotels_test");
         await logAction("DELETE_TEST_HOTELS", req, res, { message: "🗑️ Тестовые данные успешно удалены." });
@@ -173,7 +176,7 @@ router.delete("/delete-test-hotels", async (req, res) => {
 });
 
 // ✅ Добавить удобство в `amenities` ($push)
-router.put("/:id/add-amenity", async (req, res) => {
+router.put("/:id/add-amenity", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $push: { amenities: req.body.amenity } }, { new: true });
         await logAction("ADD_AMENITY", req, res, hotel);
@@ -185,7 +188,7 @@ router.put("/:id/add-amenity", async (req, res) => {
 });
 
 // ✅ Удалить удобство из `amenities` ($pull)
-router.put("/:id/remove-amenity", async (req, res) => {
+router.put("/:id/remove-amenity", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndUpdate(req.params.id, { $pull: { amenities: req.body.amenity } }, { new: true });
         await logAction("REMOVE_AMENITY", req, res, hotel);
@@ -197,7 +200,7 @@ router.put("/:id/remove-amenity", async (req, res) => {
 });
 
 // ✅ Удалить отель
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyToken,checkRole("admin"),async (req, res) => {
     try {
         const hotel = await Hotel.findByIdAndDelete(req.params.id);
         if (!hotel) {
@@ -215,7 +218,7 @@ router.delete("/:id", async (req, res) => {
 // 4 task
 const getTestCollection = () => mongoose.connection.db.collection("hotels_test");
 
-router.get("/check-indexes", async (req, res) => {
+router.get("/check-indexes",verifyToken, async (req, res) => {
     try {
         const testCollection = getTestCollection();
 
@@ -299,7 +302,7 @@ router.get("/check-indexes", async (req, res) => {
 });
 
 // Эндпоинт для генерации тестовых данных
-router.post("/generate-test-hotels", async (req, res) => {
+router.post("/generate-test-hotels", verifyToken,async (req, res) => {
     try {
         const testCollection = mongoose.connection.db.collection("hotels_test");
 
