@@ -6,6 +6,7 @@ body {
     padding: 20px;
     text-align: center;
     color: white;
+    overflow-x: hidden;
 }
 
 /* 🌟 Заголовки */
@@ -52,55 +53,81 @@ button:hover {
     background: #ff4f7b;
 }
 
-/* 🌟 Карточки отелей */
+/* 🌟 Горизонтальное отображение карточек отелей */
 .hotels {
     margin-top: 20px;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap; /* Чтобы карточки переносились, если места мало */
+    gap: 20px; /* Отступы между карточками */
+    justify-content: center; /* Центрирование карточек */
+    align-items: flex-start;
+    padding: 10px;
+    overflow-x: auto; /* Если карточек много, добавляется горизонтальный скролл */
 }
 
+/* 🌟 Карточки отелей */
 .hotel-card {
     background: white;
     color: #333;
     padding: 20px;
-    margin: 15px;
-    width: 350px;
+    margin: 0;
+    width: 300px;
     border-radius: 15px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    flex: 0 0 auto; /* Карточки не растягиваются и сохраняют фиксированный размер */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
-.hotel-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-}
-
-/* 🌟 Кнопки внутри карточек */
-button.delete-btn {
-    background: #ff4d4d;
-}
-
-button.delete-btn:hover {
-    background: #cc0000;
+/* 🌟 Кнопки внутри карточки */
+.card-buttons {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
 }
 
 button.edit-btn {
     background: #ffc107;
     color: black;
+    flex: 1;
+}
+
+button.delete-btn {
+    background: #ff4d4d;
+    color: white;
+    flex: 1;
 }
 
 button.edit-btn:hover {
     background: #e0a800;
 }
 
-/* 🌟 Адаптивность */
+button.delete-btn:hover {
+    background: #cc0000;
+}
+
+/* 🌟 Адаптивность (для мобильных устройств) */
 @media (max-width: 768px) {
-    input {
-        width: 100%;
+    .hotels {
+        flex-direction: column; /* Вертикально на маленьких экранах */
+        align-items: center;
     }
 
     .hotel-card {
         width: 90%;
     }
+}
+#index-results {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: left;
 }
