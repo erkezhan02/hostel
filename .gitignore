@@ -1,5 +1,4 @@
 .env
-sent_code/.env
 .idea/
 node_modules/
 package-lock.json

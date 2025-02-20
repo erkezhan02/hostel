@@ -61,7 +61,7 @@ router.get("/search", async (req, res) => {
 
 
 // ✅ Создать отель
-router.post("/", async (req, res) => {
+router.post("/add-hotel", async (req, res) => {
     try {
         const hotel = new Hotel(req.body);
         await hotel.save();
