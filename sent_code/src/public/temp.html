@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelBooking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .hotel-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .hotel-card h3 {
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Navigation -->
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#login">Login</a>
+        <a href="#register">Register</a>
+    </nav>
+
+    <!-- Featured Hotels -->
+    <h2>Featured Hotels</h2>
+    <div class="hotels"></div>
+
+    <!-- Add Hotel Form -->
+    <h3>Добавить отель</h3>
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name">
+    </div>
+    <div class="form-group">
+        <label for="location">Location:</label>
+        <input type="text" id="location">
+    </div>
+    <div class="form-group">
+        <label for="rating">Rating:</label>
+        <input type="number" id="rating" step="0.1" min="1" max="5">
+    </div>
+    <div class="form-group">
+        <label for="amenities">Amenities (comma-separated):</label>
+        <input type="text" id="amenities">
+    </div>
+    <button onclick="addHotel()">Добавить</button>
+
+    <!-- Update Hotel Form -->
+    <h3>Обновить отель</h3>
+    <div class="form-group">
+        <label for="update-id">ID:</label>
+        <input type="text" id="update-id">
+    </div>
+    <div class="form-group">
+        <label for="update-name">Name:</label>
+        <input type="text" id="update-name">
+    </div>
+    <div class="form-group">
+        <label for="update-location">Location:</label>
+        <input type="text" id="update-location">
+    </div>
+    <div class="form-group">
+        <label for="update-rating">Rating:</label>
+        <input type="number" id="update-rating" step="0.1" min="1" max="5">
+    </div>
+    <div class="form-group">
+        <label for="update-amenities">Amenities (comma-separated):</label>
+        <input type="text" id="update-amenities">
+    </div>
+    <button onclick="updateHotel()">Обновить</button>
+
+    <!-- Search Hotels by Rating -->
+    <h3>Поиск отелей по рейтингу</h3>
+    <div class="form-group">
+        <label for="min-rating">Min Rating:</label>
+        <input type="number" id="min-rating" step="0.1" min="1" max="5">
+    </div>
+    <div class="form-group">
+        <label for="max-rating">Max Rating:</label>
+        <input type="number" id="max-rating" step="0.1" min="1" max="5">
+    </div>
+    <button onclick="searchHotelsByRating()">Найти по рейтингу</button>
+    <div id="rating-results"></div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:5000/hotels";
+    const SEARCH_URL = "http://localhost:5000/hotels/search";
+
+    // Загрузка списка отелей
+    function getHotels() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => {
+                const hotelsContainer = document.querySelector(".hotels");
+                let html = "";
+                data.forEach(hotel => {
+                    html += `
+                        <div class="hotel-card">
+                            <h3>${hotel.name}</h3>
+                            <p><b>Город:</b> ${hotel.location}</p>
+                            <p><b>Рейтинг:</b> ${hotel.rating}★</p>
+                            <p><b>Удобства:</b> ${hotel.amenities.join(", ")}</p>
+                            <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities.join(", ")}')">Редактировать</button>
+                            <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
+                        </div>`;
+                });
+                hotelsContainer.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Ошибка при загрузке отелей:", err);
+            });
+    }
+
+    // Добавление нового отеля
+    function addHotel() {
+        const name = document.getElementById("name").value;
+        const location = document.getElementById("location").value;
+        const rating = document.getElementById("rating").value;
+        const amenities = document.getElementById("amenities").value.split(",");
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, location, rating, amenities })
+        }).then(() => getHotels());
+    }
+
+    // Обновление отеля
+    function updateHotel() {
+        const id = document.getElementById("update-id").value;
+        const name = document.getElementById("update-name").value;
+        const location = document.getElementById("update-location").value;
+        const rating = document.getElementById("update-rating").value;
+        const amenities = document.getElementById("update-amenities").value.split(",");
+        fetch(`${API_URL}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, location, rating, amenities })
+        }).then(() => getHotels());
+    }
+
+    // Заполнение формы редактирования
+    function fillUpdateForm(id, name, location, rating, amenities) {
+        document.getElementById("update-id").value = id;
+        document.getElementById("update-name").value = name;
+        document.getElementById("update-location").value = location;
+        document.getElementById("update-rating").value = rating;
+        document.getElementById("update-amenities").value = amenities;
+    }
+
+    // Удаление отеля
+    function deleteHotel(id) {
+        fetch(`${API_URL}/${id}`, { method: "DELETE" })
+            .then(() => getHotels());
+    }
+
+    // Поиск отелей по рейтингу
+    function searchHotelsByRating() {
+        const minRating = parseFloat(document.getElementById("min-rating").value) || 1;
+        const maxRating = parseFloat(document.getElementById("max-rating").value) || 5;
+        const resultsContainer = document.getElementById("rating-results");
+        fetch(`${SEARCH_URL}?minRating=${minRating}&maxRating=${maxRating}`)
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                if (data.length > 0) {
+                    data.forEach(group => {
+                        group.hotels.forEach(hotel => {
+                            html += `
+                                <div class="hotel-card">
+                                    <h3>${hotel.name}</h3>
+                                    <p><b>Город:</b> ${hotel.location}</p>
+                                    <p><b>Рейтинг:</b> ${hotel.rating}★</p>
+                                    <p><b>Удобства:</b> ${hotel.amenities ? hotel.amenities.join(", ") : ''}</p>
+                                    <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities ? hotel.amenities.join(", ") : ''}')">Редактировать</button>
+                                    <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
+                                </div>`;
+                        });
+                    });
+                } else {
+                    html = `<p>😔 Отелей с таким рейтингом не найдено.</p>`;
+                }
+                resultsContainer.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Ошибка при поиске отелей по рейтингу:", err);
+                resultsContainer.innerHTML = "<p>🚫 Ошибка при выполнении поиска.</p>";
+            });
+    }
+
+    // Инициализация при загрузке страницы
+    window.onload = () => {
+        getHotels();
+    };
+</script>
+</body>
+</html>

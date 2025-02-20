@@ -1,257 +1,283 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Booking</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Welcome Page</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <style>
+        .hotel-card {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .hotel-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
 <!-- Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="welcome_page.html">HotelBooking</a>
+        <a class="navbar-brand" href="#">HotelBooking</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="welcome_page.html">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="login.html">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="register.html">Register</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        Account
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" id="logoutButton">Logout</a></li>
+                    </ul>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- Home Page -->
-<div class="container mt-5" id="homePage">
-    <h2 class="mb-4">Featured Hotels</h2>
-    <div class="row">
-        <!-- Hotel Card 1 -->
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="images/luxury_palace_hotel.jpeg" class="card-img-top" alt="Luxury Hotel">
-                <div class="card-body">
-                    <h5 class="card-title" id="hotel_name1">Luxury Palace Hotel</h5>
-                    <div class="mb-2">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <span class="ms-2">5.0</span>
-                    </div>
-                    <p class="card-text">Experience luxury at its finest with our spacious rooms, world-class amenities, and stunning city views.</p>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookingModal">Book Now</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hotel Card 2 -->
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="images/seaside_resort.jpeg" class="card-img-top" alt="Seaside Resort">
-                <div class="card-body">
-                    <h5 class="card-title" id="hotel_name2">Seaside Resort & Spa</h5>
-                    <div class="mb-2">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="far fa-star text-warning"></i>
-                        <span class="ms-2">4.0</span>
-                    </div>
-                    <p class="card-text">Relax by the beach in our modern rooms with private balconies and full spa access.</p>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookingModal">Book Now</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hotel Card 3 -->
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="images/mountain_lodge.jpeg" class="card-img-top" alt="Mountain Lodge">
-                <div class="card-body">
-                    <h5 class="card-title" id="hotel_name3">Mountain View Lodge</h5>
-                    <div class="mb-2">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star-half-alt text-warning"></i>
-                        <span class="ms-2">4.5</span>
-                    </div>
-                    <p class="card-text">Escape to nature in our cozy mountain lodge featuring rustic charm and modern comfort.</p>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookingModal">Book Now</button>
-                </div>
-            </div>
-        </div>
+<!-- Featured Hotels -->
+<div class="container mt-5">
+    <h2>Featured Hotels</h2>
+    <div id="hotelsContainer" class="row">
+        <!-- Отели будут загружаться динамически -->
     </div>
 </div>
 
-<!-- Booking Modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Book Your Stay</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label for="checkIn" class="form-label">Check-in Date</label>
-                        <input type="date" class="form-control" id="checkIn" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="checkOut" class="form-label">Check-out Date</label>
-                        <input type="date" class="form-control" id="checkOut" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="guests" class="form-label">Number of Guests</label>
-                        <select class="form-control" id="guests" required>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="roomType" class="form-label">Room Type</label>
-                        <select class="form-control" id="roomType" required>
-                            <option value="standard">Standard Room</option>
-                            <option value="deluxe">Deluxe Room</option>
-                            <option value="suite">Suite</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Confirm Booking</button>
-            </div>
+<!-- Search Hotels by Rating -->
+<div class="container mt-5">
+    <h3>Search Hotels by Rating</h3>
+    <form id="searchHotelsForm">
+        <div class="mb-3">
+            <label for="minRating" class="form-label">Min Rating</label>
+            <input type="number" step="0.1" min="1" max="5" class="form-control" id="minRating" required>
         </div>
-    </div>
+        <div class="mb-3">
+            <label for="maxRating" class="form-label">Max Rating</label>
+            <input type="number" step="0.1" min="1" max="5" class="form-control" id="maxRating" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <div id="searchResults" class="row mt-3"></div>
 </div>
 
+<!-- Admin Features -->
+<div id="adminFeatures" class="container mt-5" style="display: none;">
+    <h3>Add Hotel</h3>
+    <form id="addHotelForm" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="hotelName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="hotelName" required>
+        </div>
+        <div class="mb-3">
+            <label for="hotelLocation" class="form-label">Location</label>
+            <input type="text" class="form-control" id="hotelLocation" required>
+        </div>
+        <div class="mb-3">
+            <label for="hotelRating" class="form-label">Rating</label>
+            <input type="number" step="0.1" min="1" max="5" class="form-control" id="hotelRating" required>
+        </div>
+        <div class="mb-3">
+            <label for="hotelAmenities" class="form-label">Amenities (comma-separated)</label>
+            <input type="text" class="form-control" id="hotelAmenities">
+        </div>
+        <div class="mb-3">
+            <label for="hotelImages" class="form-label">Upload Images (up to 5)</label>
+            <input type="file" class="form-control" id="hotelImages" name="images" multiple accept="image/*">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Hotel</button>
+    </form>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script>
-    const API_URL = "http://localhost:5000/hotels";
-    const SEARCH_URL = "http://localhost:5000/hotels/search";
+    // Получение роли пользователя из localStorage
+    const userRole = localStorage.getItem("userRole") || "user";
+    const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZGVlMmU2Ii8+CiAgICA8dGV4dCB4PSI0MDAiIHk9IjIwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSIjNmM3NTdkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gaW1hZ2UgYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4=";
 
-    // Загрузка списка отелей
-    function getHotels() {
-        fetch(API_URL)
-            .then(res => res.json())
-            .then(data => {
-                const hotelsContainer = document.querySelector(".hotels");
-                let html = "";
-                data.forEach(hotel => {
-                    html += `
-                        <div class="hotel-card">
-                            <h3>${hotel.name}</h3>
-                            <p><b>Город:</b> ${hotel.location}</p>
-                            <p><b>Рейтинг:</b> ${hotel.rating}★</p>
-                            <p><b>Удобства:</b> ${hotel.amenities.join(", ")}</p>
-                            <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities.join(", ")}')">Редактировать</button>
-                            <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
-                        </div>`;
-                });
-                hotelsContainer.innerHTML = html;
-            })
-            .catch(err => {
-                console.error("Ошибка при загрузке отелей:", err);
+
+    async function loadHotels() {
+        try {
+            const response = await fetch("http://localhost:5000/api/hotels");
+            if (!response.ok) {
+                throw new Error("Failed to load hotels");
+            }
+            const hotels = await response.json();
+            const container = document.getElementById("hotelsContainer");
+            container.innerHTML = "";
+
+            hotels.forEach(hotel => {
+                // Check if hotel has valid images
+                const hasValidImage = hotel.images && hotel.images.length > 0;
+                const imageUrl = hasValidImage
+                    ? `http://localhost:5000/api/hotels/image/${hotel.images[0]}`
+                    : PLACEHOLDER_IMAGE;
+
+                const card = `
+                <div class="col-md-4 hotel-card">
+                    <div class="position-relative">
+                        <img src="${imageUrl}"
+                             alt="${hotel.name}"
+                             class="card-img-top"
+                             onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}';"
+                             loading="lazy">
+                        ${hasValidImage ? `
+                            <div class="position-absolute bottom-0 end-0 p-2">
+                                <span class="badge bg-dark">1/${hotel.images.length}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-body p-3">
+                        <h5 class="card-title">${hotel.name}</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">${hotel.location}</span>
+                            <span class="badge bg-primary">${hotel.rating}★</span>
+                        </div>
+                        <p class="card-text small">
+                            <strong>Amenities:</strong> ${hotel.amenities?.join(", ") || "No amenities"}
+                        </p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary book-btn">Book now</button>
+                            ${userRole === "admin"
+                    ? `<button class="btn btn-danger delete-btn" onclick="deleteHotel('${hotel._id}')">Delete</button>`
+                    : ""}
+                        </div>
+                    </div>
+                </div>
+            `;
+                container.innerHTML += card;
             });
+        } catch (error) {
+            console.error("Error loading hotels:", error.message);
+            alert("An error occurred while loading hotels.");
+        }
     }
 
-    // Добавление нового отеля
-    function addHotel() {
-        const name = document.getElementById("name").value;
-        const location = document.getElementById("location").value;
-        const rating = document.getElementById("rating").value;
-        const amenities = document.getElementById("amenities").value.split(",");
-        fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, location, rating, amenities })
-        }).then(() => getHotels());
-    }
 
-    // Обновление отеля
-    function updateHotel() {
-        const id = document.getElementById("update-id").value;
-        const name = document.getElementById("update-name").value;
-        const location = document.getElementById("update-location").value;
-        const rating = document.getElementById("update-rating").value;
-        const amenities = document.getElementById("update-amenities").value.split(",");
-        fetch(`${API_URL}/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, location, rating, amenities })
-        }).then(() => getHotels());
-    }
+    // Добавить отель
+    document.getElementById("addHotelForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-    // Заполнение формы редактирования
-    function fillUpdateForm(id, name, location, rating, amenities) {
-        document.getElementById("update-id").value = id;
-        document.getElementById("update-name").value = name;
-        document.getElementById("update-location").value = location;
-        document.getElementById("update-rating").value = rating;
-        document.getElementById("update-amenities").value = amenities;
-    }
+        const formData = new FormData();
+        formData.append("name", document.getElementById("hotelName").value);
+        formData.append("location", document.getElementById("hotelLocation").value);
 
-    // Удаление отеля
-    function deleteHotel(id) {
-        fetch(`${API_URL}/${id}`, { method: "DELETE" })
-            .then(() => getHotels());
-    }
+        const rating = parseFloat(document.getElementById("hotelRating").value);
+        if (isNaN(rating)) {
+            alert("Please enter a valid rating.");
+            return;
+        }
+        formData.append("rating", rating);
+
+        formData.append("amenities", document.getElementById("hotelAmenities").value);
+
+        const imageFiles = document.getElementById("hotelImages").files;
+        if (imageFiles.length === 0) {
+            alert("Please upload at least one image.");
+            return;
+        }
+        for (let i = 0; i < imageFiles.length; i++) {
+            formData.append("images", imageFiles[i]);
+        }
+
+        try {
+            const response = await fetch("http://localhost:5000/api/hotels/add-hotel", {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                alert("Hotel added successfully!");
+                document.getElementById("addHotelForm").reset();
+                await loadHotels();
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.message}`);
+            }
+        } catch (error) {
+            console.error("Error adding hotel:", error);
+            alert("An error occurred while adding the hotel.");
+        }
+    });
 
     // Поиск отелей по рейтингу
-    function searchHotelsByRating() {
-        const minRating = parseFloat(document.getElementById("min-rating").value) || 1;
-        const maxRating = parseFloat(document.getElementById("max-rating").value) || 5;
-        const resultsContainer = document.getElementById("rating-results");
-        fetch(`${SEARCH_URL}?minRating=${minRating}&maxRating=${maxRating}`)
-            .then(res => res.json())
-            .then(data => {
-                let html = "";
-                if (data.length > 0) {
-                    data.forEach(group => {
-                        group.hotels.forEach(hotel => {
-                            html += `
-                                <div class="hotel-card">
-                                    <h3>${hotel.name}</h3>
-                                    <p><b>Город:</b> ${hotel.location}</p>
-                                    <p><b>Рейтинг:</b> ${hotel.rating}★</p>
-                                    <p><b>Удобства:</b> ${hotel.amenities ? hotel.amenities.join(", ") : ''}</p>
-                                    <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities ? hotel.amenities.join(", ") : ''}')">Редактировать</button>
-                                    <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
-                                </div>`;
-                        });
-                    });
-                } else {
-                    html = `<p>😔 Отелей с таким рейтингом не найдено.</p>`;
-                }
-                resultsContainer.innerHTML = html;
-            })
-            .catch(err => {
-                console.error("Ошибка при поиске отелей по рейтингу:", err);
-                resultsContainer.innerHTML = "<p>🚫 Ошибка при выполнении поиска.</p>";
-            });
-    }
+    document.getElementById("searchHotelsForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const minRating = parseFloat(document.getElementById("minRating").value);
+        const maxRating = parseFloat(document.getElementById("maxRating").value);
 
-    // Инициализация при загрузке страницы
+        try {
+            const response = await fetch(`http://localhost:5000/api/hotels/search?minRating=${minRating}&maxRating=${maxRating}`);
+            if (response.ok) {
+                const results = await response.json();
+                const container = document.getElementById("searchResults");
+                container.innerHTML = "";
+
+                results.forEach(group => {
+                    group.hotels.forEach(hotel => {
+                        const hasValidImage = hotel.images && hotel.images.length > 0;
+                        const imageUrl = hasValidImage
+                            ? `http://localhost:5000/api/hotels/image/${hotel.images[0]}`
+                            : PLACEHOLDER_IMAGE;
+
+                        const card = `
+                        <div class="col-md-4 hotel-card">
+                            <div class="position-relative">
+                                <img src="${imageUrl}"
+                                     alt="${hotel.name}"
+                                     class="card-img-top"
+                                     onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}';"
+                                     loading="lazy">
+                            </div>
+                            <div class="card-body p-3">
+                                <h5 class="card-title">${hotel.name}</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">${hotel.location}</span>
+                                    <span class="badge bg-primary">${hotel.rating}★</span>
+                                </div>
+                                <p class="card-text small">
+                                    <strong>Amenities:</strong> ${hotel.amenities?.join(", ") || "No amenities"}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                        container.innerHTML += card;
+                    });
+                });
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.message}`);
+            }
+        } catch (error) {
+            console.error("Error searching hotels:", error);
+            alert("An error occurred while searching hotels.");
+        }
+    });
+
+
+    // Обработчик для кнопки "Logout"
+    document.getElementById("logoutButton").addEventListener("click", () => {
+        localStorage.removeItem("userToken"); // Пример очистки токена
+        localStorage.removeItem("userRole"); // Очистка роли
+        alert("You have been logged out.");
+        window.location.href = "login.html"; // Перенаправление на страницу входа
+    });
+
+    // Загрузка отелей при загрузке страницы
     window.onload = () => {
-        getHotels();
+        if (userRole === "admin") {
+            document.getElementById("adminFeatures").style.display = "block";
+        }
+        loadHotels();
     };
 </script>
 </body>

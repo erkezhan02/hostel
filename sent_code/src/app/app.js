@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const connectDB = require("../config/db")
 const userRoutes = require("../routes/userRoutes")
-const hotelsRouter = require("../../../routes/hotels");
+const hotelRoutes = require("../routes/hotelRoutes");
 const path = require("path");
 const roleRoutes = require("../routes/roleRoutes");
 
@@ -12,9 +12,10 @@ connectDB()
 const app = express()
 app.use(cors())
 app.use(express.json())
+app.use(express.urlencoded({ extended: true })) // For form data
 app.use(express.static("public"));
 
-app.use("/hotels", hotelsRouter);
+app.use("/api/hotels", hotelRoutes);
 
 // Эндпоинт для index.html
 app.get("/index", (req, res) => {

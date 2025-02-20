@@ -88,6 +88,7 @@
                 const user = await response.json();
                 alert(`User ${user.name} registered successfully!`);
                 document.getElementById("registerForm").reset(); // Очищаем форму
+                location.replace("welcome_page.html");
             } else {
                 const error = await response.json();
                 alert(`Error: ${error.message}`);
