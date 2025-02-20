@@ -4,6 +4,7 @@ const connectDB = require("../config/db")
 const userRoutes = require("../routes/userRoutes")
 const hotelRoutes = require("../routes/hotelRoutes");
 const path = require("path");
+const roleRoutes = require("../routes/roleRoutes");
 
 require('dotenv').config({ path: '../../../.env' });
 connectDB()
@@ -28,6 +29,9 @@ app.get("/welcome_page", (req, res) => {
 });
 
 app.use("/api/users", userRoutes)
+app.use("/api/roles", roleRoutes);
+
+
 
 const port = process.env.PORT || 5000
 app.listen(port, () => { console.log(`Server started on port ${port}`) })

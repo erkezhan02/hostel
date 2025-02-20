@@ -35,11 +35,94 @@
 </div>
 <div id="rating-results" class="hotels"></div>
 
+<h2>🔬 Тестовые данные для индексов</h2>
+<button onclick="generateTestData()">🚀 Создать тестовые данные</button>
+<button onclick="checkIndexes()">🔍 Проверить индексы</button>
+<button onclick="deleteTestData()">🗑 Удалить тестовые данные</button>
+<div id="index-results"></div>
 
 
 <script>
     const API_URL = "http://localhost:5000/hotels";
     const SEARCH_URL = "http://localhost:5000/hotels/search";
+
+
+    window.checkIndexes = function () {
+        const resultsContainer = document.getElementById("index-results");
+        resultsContainer.innerHTML = "⏳ Проверка индексов...";
+
+        fetch(`${API_URL}/check-indexes`)
+            .then(res => {
+                if (!res.ok) throw new Error(`Ошибка: ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                console.log("✅ Результаты индексации:", data);
+                let html = "<h3>📊 Результаты проверки индексов</h3>";
+                html += "<table border='1' style='width:100%; text-align:center;'>";
+                html += `
+            <tr>
+              <th>Тип индекса</th>
+              <th>Док-ов без индекса</th>
+              <th>Время без индекса (мс)</th>
+              <th>Док-ов с индексом</th>
+              <th>Время с индексом (мс)</th>
+              <th>Разница/Примечание</th>
+            </tr>
+          `;
+
+                for (const key in data) {
+                    let rowHtml = "";
+                    const item = data[key];
+                    if (item.error) {
+                        rowHtml = `<tr>
+                <td><b>${key}</b></td>
+                <td colspan="5" style="color: red;">Ошибка: ${item.error}</td>
+              </tr>`;
+                    } else if (item.withoutIndex && item.withIndex) {
+                        const improvement = item.withoutIndex.executionTimeMillis - item.withIndex.executionTimeMillis;
+                        rowHtml = `<tr>
+                <td><b>${key}</b></td>
+                <td>${item.withoutIndex.totalDocsExamined}</td>
+                <td>${item.withoutIndex.executionTimeMillis} мс</td>
+                <td>${item.withIndex.totalDocsExamined}</td>
+                <td>${item.withIndex.executionTimeMillis} мс</td>
+                <td style="color: ${improvement > 0 ? 'green' : 'red'};">${improvement} мс</td>
+              </tr>`;
+                    }
+                    html += rowHtml;
+                }
+
+                html += "</table>";
+                resultsContainer.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("❌ Ошибка при проверке индексов:", err);
+                document.getElementById("index-results").innerHTML = `🚫 Ошибка при проверке индексов: ${err.message}`;
+            });
+    };
+
+
+    function generateTestData() {
+        fetch(`${API_URL}/generate-test-hotels`, { method: "POST" })
+            .then(res => res.json())
+            .then(data => alert(data.message))
+            .catch(err => alert("Ошибка: " + err.message));
+    }
+
+    function deleteTestData() {
+        fetch("http://localhost:5000/hotels/delete-test-hotels", { method: "DELETE" })
+            .then(async res => {
+                // Если статус не 2xx, выбрасываем ошибку с текстом ответа
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Ошибка: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => alert(data.message))
+            .catch(err => alert("Ошибка при удалении тестовых данных: " + err.message));
+    }
 
 
     function getHotels() {
@@ -111,37 +194,52 @@
         const maxRating = parseFloat(document.getElementById("max-rating").value) || 5;
         const resultsContainer = document.getElementById("rating-results");
 
+        resultsContainer.innerHTML = "<p> Загрузка результатов...</p>";
+
         fetch(`${SEARCH_URL}?minRating=${minRating}&maxRating=${maxRating}`)
             .then(res => res.json())
             .then(data => {
-                let html = "";
-                if (data.length > 0) {
-                    data.forEach(group => {
-                        group.hotels.forEach(hotel => {
-                            html += `
-                            <div class="hotel-card">
-                                <h3>${hotel.name}</h3>
-                                <p><b>Город:</b> ${hotel.location}</p>
-                                <p><b>Рейтинг:</b> ${hotel.rating}★</p>
-                                <p><b>Удобства:</b> ${hotel.amenities ? hotel.amenities.join(", ") : ''}</p>
-                                <button class="edit-btn" onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}', '${hotel.amenities ? hotel.amenities.join(", ") : ''}')">Редактировать</button>
-                                <button class="delete-btn" onclick="deleteHotel('${hotel._id}')">Удалить</button>
-                            </div>`;
-                        });
-                    });
-                } else {
-                    html = `<p>😔 Отелей с таким рейтингом не найдено.</p>`;
+                if (!data.length) {
+                    resultsContainer.innerHTML = "<p> Отелей с таким рейтингом не найдено.</p>";
+                    return;
                 }
+
+                let html = "";
+
+                // Перебор групп по диапазонам рейтинга ($bucket)
+                data.forEach(group => {
+                    html += `
+                <div class="rating-group">
+                    <p>🏨 Количество отелей: ${group.count}</p>
+                    <div class="hotel-list">
+                `;
+
+                    // Отображение каждого отеля в группе
+                    group.hotels.forEach(hotel => {
+                        html += `
+                    <div class="hotel-card">
+                        <h4>${hotel.name}</h4>
+                        <p><b>📍 Местоположение:</b> ${hotel.location}</p>
+                        <p><b>⭐ Рейтинг:</b> ${hotel.rating}</p>
+                        <p><b>🛏️ Удобства:</b> ${hotel.amenities?.length ? hotel.amenities.join(", ") : "Нет данных"}</p>
+                        <button onclick="fillUpdateForm('${hotel._id}', '${hotel.name}', '${hotel.location}', '${hotel.rating}')">✏️ Редактировать</button>
+                        <button onclick="deleteHotel('${hotel._id}')">🗑️ Удалить</button>
+                    </div>
+                `;
+                    });
+
+                    html += `</div></div><hr/>`;
+                });
 
                 resultsContainer.innerHTML = html;
             })
             .catch(err => {
-                console.error("Ошибка при поиске отелей по рейтингу:", err);
-                resultsContainer.innerHTML = "<p>🚫 Ошибка при выполнении поиска.</p>";
+                console.error(" Ошибка при выполнении поиска:", err);
+                resultsContainer.innerHTML = "<p> Не удалось загрузить отели. Попробуйте снова.</p>";
             });
+
     }
 
 </script>
-
 </body>
 </html>

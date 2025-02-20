@@ -1,41 +1,128 @@
-const User = require("../models/User")
+// 📌 Создать нового пользователя
+const bcrypt = require("bcrypt");
+const User = require("../models/User");
+const Role = require("../models/Role");
+const Log = require("../models/Log");
+const jwt = require("jsonwebtoken");
 
-// Create User
 exports.createUser = async (req, res) => {
     try {
-        const user = new User(req.body)
-        await user.save()
-        res.status(201).json(user)
+        const { name, email, password, roleId } = req.body;
+
+        // Проверка существования email
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "❌ Пользователь с таким email уже существует." });
+        }
+
+        let assignedRoleId = roleId;
+        if (!roleId) {
+            const userRole = await Role.findOne({ name: "user" });
+            if (!userRole) {
+                return res.status(500).json({ message: "❌ Роль 'user' не найдена." });
+            }
+            assignedRoleId = userRole._id;
+        }
+
+        // ❗️ Удаляем лишнее хеширование здесь
+        const newUser = new User({
+            name,
+            email,
+            password, // ❗️ Пароль будет хеширован в UserSchema.pre("save")
+            roleId: assignedRoleId
+        });
+
+        await newUser.save();
+
+        res.status(201).json({ message: "✅ Пользователь успешно создан.", user: newUser });
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        console.error("❌ Ошибка при создании пользователя:", error);
+        res.status(500).json({ error: error.message });
     }
-}
+};
 
-// Obtain all users
+
+
+// 📌 Получить всех пользователей с их ролями
 exports.getUsers = async (req, res) => {
-    const users = await User.find()
-    res.json(users)
-}
+    try {
+        const users = await User.find().populate("roleId", "name description");
 
-// User authentication
+        // Логирование
+        await Log.create({
+            action: "GET_USERS",
+            endpoint: req.originalUrl,
+            method: req.method,
+            user: "Admin",
+            requestData: {},
+            responseData: users,
+            statusCode: 200
+        });
+
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("❌ Ошибка при получении пользователей:", error);
+        await Log.create({
+            action: "GET_USERS_ERROR",
+            endpoint: req.originalUrl,
+            method: req.method,
+            user: "Admin",
+            requestData: {},
+            responseData: { error: error.message },
+            statusCode: 500
+        });
+
+        res.status(500).json({ error: error.message });
+    }
+};
+
 exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Поиск пользователя по email
-        const user = await User.findOne({ email });
+        // 🔍 Поиск пользователя
+        const user = await User.findOne({ email }).populate("roleId", "name");
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "❌ Пользователь не найден." });
         }
 
-        // Проверка пароля
-        if (user.password !== password) {
-            return res.status(401).json({ message: "Invalid password" });
+        // 🔒 Проверка пароля
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "❌ Неверный пароль." });
         }
 
-        // Возвращаем данные пользователя
-        res.status(200).json(user);
+        // 🟢 Генерация JWT токена с email
+        const token = jwt.sign(
+            { userId: user._id, email: user.email, role: user.roleId?.name || "user" },
+            process.env.JWT_SECRET || "secretKey",
+            { expiresIn: "1h" }
+        );
+
+        // ✅ Лог успешного входа
+        await Log.create({
+            action: "USER_LOGIN",
+            endpoint: req.originalUrl,
+            method: req.method,
+            user: email,
+            requestData: req.body,
+            responseData: { message: "✅ Успешный вход", userId: user._id },
+            statusCode: 200
+        });
+
+        // 📄 Ответ с токеном
+        res.status(200).json({
+            message: "✅ Успешный вход.",
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.roleId?.name || "user"
+            }
+        });
     } catch (error) {
+        console.error("❌ Ошибка при входе:", error);
         res.status(500).json({ message: error.message });
     }
 };
