@@ -19,9 +19,6 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="welcome_page.html">Home</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="login.html">Login</a>
                 </li>
                 <li class="nav-item">
@@ -81,7 +78,7 @@
             if (response.ok) {
                 const user = await response.json();
                 localStorage.setItem("userRole", user.role); // Сохраняем роль пользователя
-                alert(`Welcome back, ${user.name}!`);
+                alert(`Welcome back!`);
                 // Перенаправление на домашнюю страницу или другую логику после входа
                 window.location.href = "welcome_page.html";
             } else {

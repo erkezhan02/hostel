@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Booking</title>
+  <!-- Подключение Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Кнопка для открытия модального окна -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookingModal">
+  Book a Room
+</button>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bookingModalLabel">Book a Room</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="bookingForm">
+          <div class="mb-3">
+            <label for="checkInDate" class="form-label">Check-in Date</label>
+            <input type="date" class="form-control" id="checkInDate" required>
+          </div>
+          <div class="mb-3">
+            <label for="checkOutDate" class="form-label">Check-out Date</label>
+            <input type="date" class="form-control" id="checkOutDate" required>
+          </div>
+          <div class="mb-3">
+            <label for="numberOfPeople" class="form-label">Number of People</label>
+            <input type="number" class="form-control" id="numberOfPeople" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label for="userEmail" class="form-label">Your Email</label>
+            <input type="email" class="form-control" id="userEmail" placeholder="name@example.com" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Book Now</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Подключение Bootstrap JS и Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Скрипт для отправки данных в MongoDB -->
+<script>
+  $(document).ready(function() {
+    $('#bookingForm').on('submit', function(event) {
+      event.preventDefault();
+
+      // Получаем данные из формы
+      const checkInDate = $('#checkInDate').val();
+      const checkOutDate = $('#checkOutDate').val();
+      const numberOfPeople = $('#numberOfPeople').val();
+      const userEmail = $('#userEmail').val();
+
+      // Отправляем данные на сервер для сохранения в MongoDB
+      $.ajax({
+        url: '/book-room',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          checkInDate: checkInDate,
+          checkOutDate: checkOutDate,
+          numberOfPeople: numberOfPeople,
+          userEmail: userEmail
+        }),
+        success: function(response) {
+          alert('Room booked successfully!');
+          $('#bookingModal').modal('hide');
+        },
+        error: function(error) {
+          alert('Error booking room: ' + error.responseText);
+        }
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

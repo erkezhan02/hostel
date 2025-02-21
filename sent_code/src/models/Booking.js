@@ -1,11 +1,28 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose")
 require("dotenv").config();
 
 const bookingSchema = new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    hotel_id: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true },
-    room_id: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
-    check_in: { type: Date, required: true },
-    check_out: { type: Date, required: true },
-    status: { type: String, enum: ["confirmed", "cancelled"], default: "confirmed" }
-});
+    checkInDate: {
+        type: String,
+        required: true
+    },
+    checkOutDate: {
+        type: String,
+        required: true
+    },
+    numberOfPeople: {
+        type: Number,
+        required: true
+    },
+    userEmail: {
+        type: String,
+        required: true
+    },
+    hotelId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Hotel',
+        required: true
+    }
+}, { timestamps: true });
+
+module.exports = mongoose.model("Booking", bookingSchema);
