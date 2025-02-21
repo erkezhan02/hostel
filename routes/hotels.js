@@ -57,14 +57,14 @@ router.get("/search", verifyToken, async (req, res) => {
                 }
             },
 
-            {
+            { // Разворачивает массив amenities, создавая отдельный документ для каждого удобства.
                 $unwind: {
                     path: "$amenities",
                     preserveNullAndEmptyArrays: true
                 }
             },
 
-            {
+            { // группируем данные по этим данным
                 $group: {
                     _id: "$_id",
                     name: { $first: "$name" },
@@ -74,7 +74,7 @@ router.get("/search", verifyToken, async (req, res) => {
                 }
             },
 
-            {
+            { // Разбивает документы на группы по рейтингу
                 $bucket: {
                     groupBy: "$rating",
                     boundaries: [0, 1, 2, 3, 4, 5, 6],
@@ -94,7 +94,7 @@ router.get("/search", verifyToken, async (req, res) => {
                 }
             },
 
-            {
+            { // Формирует итоговый вид документов
                 $project: {
                     _id: 0,
                     ratingRange: "$_id",
@@ -103,7 +103,7 @@ router.get("/search", verifyToken, async (req, res) => {
                 }
             },
 
-            {
+            { // записываю резы
                 $out: "hotelSearchResults"
             }
         ];

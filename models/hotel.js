@@ -26,4 +26,4 @@ hotelSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
 
 console.log(" Все индексы успешно пересозданы.");
 
-module.exports = mongoose.model("Hotel", hotelSchema);
+module.exports = mongoose.models.Hotel || mongoose.model("Hotel", hotelSchema);

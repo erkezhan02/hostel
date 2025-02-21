@@ -3,6 +3,7 @@ const cors = require('cors')
 const connectDB = require("../config/db")
 const userRoutes = require("../routes/userRoutes")
 const hotelRoutes = require("../routes/hotelRoutes");
+const hotelRoutes1 = require("../../../routes/hotels");
 const path = require("path");
 const roleRoutes = require("../routes/roleRoutes");
 
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true })) // For form data
 app.use(express.static("public"));
 
 app.use("/hotels", hotelRoutes);
+app.use("/api/hotels", hotelRoutes1);
 
 // Эндпоинт для index.html
 app.get("/index", (req, res) => {
